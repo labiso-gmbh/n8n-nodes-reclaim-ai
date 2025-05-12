@@ -229,6 +229,26 @@ export class ReclaimAiTask implements INodeType {
         placeholder: '#RRGGBB or color name',
         description: 'Color for the event (e.g., #FF0000 or "blue")',
       },
+
+      // Filters for "Get All" operation
+      {
+        displayName: 'Status',
+        name: 'statusFilter',
+        type: 'multiOptions',
+        displayOptions: {
+          show: { operation: ['getAll'] },
+        },
+        default: ['COMPLETE', 'NEW', 'IN_PROGRESS', 'SCHEDULED'],
+        options: [
+          { name: 'New', value: 'NEW' },
+          { name: 'Scheduled', value: 'SCHEDULED' },
+          { name: 'In Progress', value: 'IN_PROGRESS' },
+          { name: 'Complete', value: 'COMPLETE' },
+          { name: 'Archived', value: 'ARCHIVED' },
+          { name: 'Cancelled', value: 'CANCELLED' },
+        ],
+        description: 'Filter tasks by one or more statuses.',
+      },
     ],
   };
 
@@ -297,8 +317,6 @@ export class ReclaimAiTask implements INodeType {
         let method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET';
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const body: { [key: string]: any } = {};
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const qs: { [key: string]: any } = {};
 
         if (operation === 'create') {
           method = 'POST';
@@ -455,6 +473,17 @@ export class ReclaimAiTask implements INodeType {
           }
         } else if (operation === 'getAll') {
           method = 'GET';
+          const queryParams = new URLSearchParams();
+
+          const statusFilter = this.getNodeParameter('statusFilter', i, []) as string[];
+          if (statusFilter && statusFilter.length > 0) {
+            queryParams.append('status', statusFilter.join(',')); // Join statuses with a comma
+          }
+
+          const queryString = queryParams.toString();
+          if (queryString) {
+            endpoint = `${baseUrl}?${queryString}`;
+          }
         }
 
         const options: IHttpRequestOptions = {
@@ -476,12 +505,9 @@ export class ReclaimAiTask implements INodeType {
         if (method === 'POST' || method === 'PATCH') {
           options.body = body;
         }
-        if (method === 'GET' && Object.keys(qs).length > 0) {
-          options.qs = qs;
-        }
 
         this.logger.debug('Request body:', { body });
-        this.logger.debug('Request query string:', { qs });
+        this.logger.debug(`Request URL for GET: ${method === 'GET' ? endpoint : ''}`);
 
         const responseData = await this.helpers.httpRequest(options);
 
