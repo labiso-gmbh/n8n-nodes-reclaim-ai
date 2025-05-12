@@ -73,24 +73,6 @@ export class ReclaimAiTask implements INodeType {
         description: 'Title of the task',
         required: true,
       },
-      // The 'type' field (TASK, HABIT, etc.) is removed as it's not part of the /api/tasks POST request body schema.
-      // {
-      //   displayName: 'Type',
-      //   name: 'type',
-      //   type: 'options',
-      //   displayOptions: {
-      //     show: { operation: ['create', 'update'] },
-      //   },
-      //   default: 'TASK',
-      //   options: [
-      //     // From API Spec
-      //     { name: 'Task', value: 'TASK' },
-      //     { name: 'Habit', value: 'HABIT' },
-      //     { name: 'Buffer', value: 'BUFFER' },
-      //     { name: 'One-on-One', value: 'ONE_ON_ONE' },
-      //   ],
-      //   description: 'Type of the task',
-      // },
       {
         displayName: 'Notes',
         name: 'notes',
@@ -109,13 +91,12 @@ export class ReclaimAiTask implements INodeType {
         displayOptions: {
           show: { operation: ['create', 'update'] },
         },
-        default: 'P2', // User-facing default
+        default: 'P3', // User-facing default
         options: [
-          // User-facing values, will be mapped to API values (P1-P4)
-          { name: 'Urgent', value: 'P4' },
-          { name: 'High', value: 'P3' },
-          { name: 'Medium', value: 'P2' },
-          { name: 'Low', value: 'P1' },
+          { name: 'Urgent', value: 'P1' },
+          { name: 'High', value: 'P2' },
+          { name: 'Medium', value: 'P3' },
+          { name: 'Low', value: 'P4' },
         ],
         description: 'Priority of the task',
         required: true,
@@ -509,14 +490,7 @@ export class ReclaimAiTask implements INodeType {
             body.eventCategory = this.getNodeParameter('eventCategory', i, 'WORK') as string;
 
             // Required field - priority
-            const priorityFromNodeUpdate = this.getNodeParameter('priority', i, 'MEDIUM') as string;
-            const priorityMapUpdate: { [key: string]: string } = {
-              URGENT: 'P1',
-              HIGH: 'P2',
-              MEDIUM: 'P3',
-              LOW: 'P4',
-            };
-            body.priority = priorityMapUpdate[priorityFromNodeUpdate.toUpperCase()] || 'P3';
+            body.priority = this.getNodeParameter('priority', i, 'P3') as string;
 
             // Required fields - minChunkSize and maxChunkSize
             body.minChunkSize = this.getNodeParameter('minChunkSize', i, 1) as number;
