@@ -6,6 +6,16 @@ yarn-error.log*
 package-lock.json # If you exclusively use yarn.lock
 # yarn.lock # If you exclusively use package-lock.json (choose one or neither if you use both intentionally)
 
+# Yarn Berry
+# Cache and artifacts, but keep configuration and necessary packages/plugins
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
 # TypeScript
 # Compiled JavaScript files and declaration files
 dist/
@@ -14,6 +24,9 @@ dist/
 *.d.ts # Declaration files (if generated next to source, or in dist/)
 # TypeScript build info file
 *.tsbuildinfo
+
+# Linting cache
+.eslintcache
 
 # n8n specific (usually n8n stores data in ~/.n8n, but just in case)
 .n8n/
@@ -59,13 +72,13 @@ coverage/
 .env.*.local
 
 # Optional: Compiled output from other tools
-# .parcel-cache/
-# .cache/
+# .parcel-cache/ # Uncomment if you use Parcel
+.cache/
 
 # Optional: Test reports
-# junit.xml
-# test-results/
+# junit.xml # Uncomment if you generate JUnit XML reports
+test-results/
 
 # Optional: If you bundle your nodes for distribution
-# *.tgz
-# *.n8n.zip
+*.tgz
+*.n8n.zip

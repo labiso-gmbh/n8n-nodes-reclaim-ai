@@ -1,0 +1,43 @@
+{
+  "name": "n8n-nodes-reclaim-ai",
+  "version": "0.1.0",
+  "description": "n8n custom nodes for Reclaim.ai",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "rimraf dist && tsc && mkdir -p dist/nodes && cp nodes/*.svg dist/nodes/",
+    "dev": "npm run build && n8n start --tunnel",
+    "lint": "eslint nodes/**/*.ts credentials/**/*.ts",
+    "lint:fix": "eslint nodes/**/*.ts credentials/**/*.ts --fix",
+    "format": "prettier --write nodes/**/*.ts credentials/**/*.ts"
+  },
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/ReclaimAiApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/ReclaimAiTask.node.js"
+    ]
+  },
+  "repository": "https://github.com/labiso-gmbh/n8n-nodes-reclaim-ai.git",
+  "author": "Laurence Lars Labusch <lala@labiso.de>",
+  "license": "MIT",
+  "dependencies": {
+    "date-fns": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.12",
+    "@typescript-eslint/eslint-plugin": "^7.9.0",
+    "@typescript-eslint/parser": "^7.9.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-n8n-nodes-base": "^1.24.0",
+    "n8n-core": "^1.23.0",
+    "n8n-workflow": "^1.23.0",
+    "n8n-nodes-base": "^1.23.0",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
