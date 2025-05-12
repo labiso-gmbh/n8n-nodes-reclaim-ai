@@ -1,0 +1,131 @@
+{
+  // Name for the dev container configuration
+  "name": "n8n Custom Nodes for Reclaim.ai (Node.js 20 & TypeScript)",
+
+  // Specifies the Docker image to use as the base for the development container.
+  // We're using a pre-built image from Microsoft that includes Node.js (version 20 LTS specified) and TypeScript.
+  // This image also comes with common tools like git, curl, wget, and build-essential.
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+
+  // Features to add to the dev container.
+  "features": {
+    // Installs Yarn package manager. While npm is available, Yarn is often preferred in n8n development.
+    "ghcr.io/devcontainers/features/yarn:1": {}
+  },
+
+  // VS Code specific settings and extensions.
+  "customizations": {
+    "vscode": {
+      // List of VS Code extension IDs to automatically install in the container.
+      "extensions": [
+        "dbaeumer.vscode-eslint", // ESLint for code linting
+        "esbenp.prettier-vscode", // Prettier for code formatting
+        "saoudrizwan.claude-dev", // Claude for VSCode (Dev)
+        "ms-vscode.vscode-typescript-next", // TypeScript Nightly (or use 'ms-vscode.typescript-language-features' for stable)
+        "eamodio.gitlens", // GitLens — Git supercharged
+        "ms-azuretools.vscode-docker", // Docker extension (useful for managing Docker if needed)
+        "VisualStudioExptTeam.vscodeintellicode", // IntelliCode for AI-assisted development
+        "pflannery.vscode-versionlens" // Version Lens to see latest versions of dependencies
+      ],
+      // Default settings for VS Code within the container.
+      "settings": {
+        "editor.formatOnSave": true, // Automatically format files on save
+        "editor.defaultFormatter": "esbenp.prettier-vscode", // Set Prettier as the default formatter
+        "files.eol": "\n", // Ensure consistent line endings
+        // Terminal settings
+        "terminal.integrated.defaultProfile.linux": "bash", // Or zsh if preferred and configured
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash"
+          }
+        },
+        // TypeScript specific settings
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
+      }
+    }
+  },
+
+  // Port forwarding: Maps a port from the container to the local machine.
+  // n8n typically runs on port 5678.
+  "forwardPorts": [5678],
+
+  // Workspace mount: Specifies how the local project workspace is mounted into the container.
+  // This uses the default behavior, mounting the project root to /workspaces/{projectName}.
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
+
+  // User: Specifies the user the container will run as.
+  // The 'typescript-node' image often defaults to a non-root 'node' user.
+  // If not, 'remoteUser' can force it. Using 'vscode' is also common.
+  "remoteUser": "node", // Or "vscode" if preferred and the image supports it.
+
+  // Environment variables to set in the container.
+  "remoteEnv": {
+    // Tells n8n where to look for custom nodes.
+    // Assumes compiled nodes will be in a 'dist' directory at the root of the workspace.
+    // Adjust if your build process outputs nodes to a different location (e.g., 'dist/nodes').
+    "N8N_CUSTOM_EXTENSIONS_DIR": "/workspaces/${localWorkspaceFolderBasename}/dist"
+    // You might also want to set NODE_ENV if needed, e.g., "NODE_ENV": "development"
+  },
+
+  // Lifecycle commands: Commands to run at different stages of the container lifecycle.
+
+  // 'postCreateCommand': Runs once after the container is created.
+  // Good for installing global tools or dependencies that don't change often.
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y lsof && yarn global add n8n typescript ts-node",
+
+  // 'postAttachCommand': Runs every time VS Code attaches to the container.
+  // Useful for commands that need to run each time you connect.
+  // "postAttachCommand": {
+  //   "server": "n8n start" // Example: Start n8n automatically (consider if this is desired)
+  // },
+
+  // 'updateContentCommand': Runs when the content of the devcontainer.json or related files changes.
+  // Typically used to rebuild or reinstall dependencies if the configuration changes.
+  // "updateContentCommand": "yarn install && yarn build",
+
+
+  // 'postStartCommand': Runs after 'postCreateCommand' and 'postAttachCommand' every time the container starts.
+  // This is a good place for installing project-specific dependencies and building the project.
+  // Assumes your project has a package.json with scripts for 'install' and 'build'.
+  // The 'build' script should compile your TypeScript nodes to the 'dist' directory.
+  "postStartCommand": "yarn install && yarn build",
+
+
+  // 'initializeCommand': Runs before the container is created.
+  // Can be used for one-time setup tasks on the host machine if needed.
+  // "initializeCommand": "",
+
+
+  // Comments about project structure and assumptions:
+  // This devcontainer.json assumes:
+  // 1. Your project has a 'package.json' at the root.
+  // 2. 'package.json' includes dev dependencies like 'n8n-workflow', 'n8n-core', 'n8n-nodes-base',
+  //    'typescript', 'ts-node', 'eslint-plugin-n8n-nodes-rules', 'prettier'.
+  // 3. 'package.json' has scripts:
+  //    - 'build': Compiles TypeScript nodes (e.g., from 'nodes/' to 'dist/').
+  //    - 'dev': For running n8n in development mode, potentially with node linking.
+  //    - 'lint', 'format': For code quality.
+  // 4. Custom nodes source files are in a 'nodes/' directory.
+  // 5. Compiled custom nodes (JavaScript) will be output to a 'dist/' directory
+  //    at the project root, which 'N8N_CUSTOM_EXTENSIONS_DIR' points to.
+  //    If your nodes are in subdirectories like 'dist/nodes', adjust 'N8N_CUSTOM_EXTENSIONS_DIR'
+  //    to `/workspaces/${localWorkspaceFolderBasename}/dist/nodes`.
+
+  // To run n8n with your custom nodes after the container is up and dependencies are installed:
+  // - Open a new terminal in VS Code.
+  // - If you have a 'dev' script in package.json that handles linking and starting n8n:
+  //   `yarn dev`
+  // - Or, to start n8n manually (it should pick up nodes from N8N_CUSTOM_EXTENSIONS_DIR):
+  //   `n8n start` or `n8n`
+  // - For webhook testing with a tunnel:
+  //   `n8n start --tunnel`
+
+  // Author: Laurence Labusch, LABISO GmbH
+  "runArgs": ["--userns=keep-id"] // Ensures files created in the container have the same UID/GID as your local user.
+}
