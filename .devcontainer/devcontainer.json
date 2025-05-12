@@ -6,12 +6,13 @@
   // We're using a pre-built image from Microsoft that includes Node.js (version 20 LTS specified) and TypeScript.
   // This image also comes with common tools like git, curl, wget, and build-essential.
   "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  // This image is multi-arch and will use the arm64 variant on Apple Silicon (M-series chips) for optimal performance.
 
   // Features to add to the dev container.
-  "features": {
-    // Installs Yarn package manager. While npm is available, Yarn is often preferred in n8n development.
-    "ghcr.io/devcontainers/features/yarn:1": {}
-  },
+  // "features": {
+  //   // Installs Yarn package manager. While npm is available, Yarn is often preferred in n8n development.
+  //   "ghcr.io/devcontainers/features/yarn:1": {}
+  // },
 
   // VS Code specific settings and extensions.
   "customizations": {
@@ -77,7 +78,7 @@
 
   // 'postCreateCommand': Runs once after the container is created.
   // Good for installing global tools or dependencies that don't change often.
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y lsof && yarn global add n8n typescript ts-node",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y lsof && npm install -g yarn && yarn global add n8n typescript ts-node",
 
   // 'postAttachCommand': Runs every time VS Code attaches to the container.
   // Useful for commands that need to run each time you connect.
@@ -94,7 +95,7 @@
   // This is a good place for installing project-specific dependencies and building the project.
   // Assumes your project has a package.json with scripts for 'install' and 'build'.
   // The 'build' script should compile your TypeScript nodes to the 'dist' directory.
-  "postStartCommand": "yarn install && yarn build",
+  "postStartCommand": "yarn install && yarn build"
 
 
   // 'initializeCommand': Runs before the container is created.
@@ -127,5 +128,5 @@
   //   `n8n start --tunnel`
 
   // Author: Laurence Labusch, LABISO GmbH
-  "runArgs": ["--userns=keep-id"] // Ensures files created in the container have the same UID/GID as your local user.
+  // "runArgs": ["--userns=keep-id"] // Ensures files created in the container have the same UID/GID as your local user.
 }
