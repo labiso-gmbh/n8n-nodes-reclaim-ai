@@ -19,7 +19,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org/'
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --frozen-lockfile
 
       - name: Configure Git
         run: |
@@ -28,9 +28,9 @@ jobs:
 
       - name: Bump version, build, and publish
         run: |
-          npm version patch -m "Bump version to %s"
-          npm run build
-          npm publish
+          yarn version --patch --message "Bump version to %s"
+          yarn run build
+          yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
