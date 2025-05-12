@@ -475,6 +475,10 @@ export class ReclaimAiTask implements INodeType {
           // New properties for create
           const eventColor = this.getNodeParameter('eventColor', i, '') as string;
           if (eventColor) body.eventColor = eventColor;
+
+          // Optional fields
+          const notes = this.getNodeParameter('notes', i, '') as string;
+          if (notes) body.notes = notes;
         } else if (operation === 'get' || operation === 'update' || operation === 'delete') {
           const taskId = this.getNodeParameter('taskId', i) as string;
           if (!taskId) {
