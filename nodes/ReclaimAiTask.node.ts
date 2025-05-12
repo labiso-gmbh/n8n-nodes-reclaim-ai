@@ -150,7 +150,7 @@ export class ReclaimAiTask implements INodeType {
         required: true,
       },
       {
-        displayName: 'Due Date',
+        displayName: 'Due Date (UTC Time)',
         name: 'due',
         type: 'dateTime',
         default: '',
@@ -160,7 +160,7 @@ export class ReclaimAiTask implements INodeType {
         description: 'When the task is due (ISO 8601 format)',
       },
       {
-        displayName: 'Snooze Until',
+        displayName: 'Snooze Until (UTC Time)',
         name: 'snoozeUntil',
         type: 'dateTime',
         default: '',
@@ -468,9 +468,9 @@ export class ReclaimAiTask implements INodeType {
 
           // Optional fields
           const due = this.getNodeParameter('due', i) as string;
-          if (due) body.due = due;
+          if (due) body.due = new Date(due).toISOString();
           const snoozeUntil = this.getNodeParameter('snoozeUntil', i) as string;
-          if (snoozeUntil) body.snoozeUntil = snoozeUntil;
+          if (snoozeUntil) body.snoozeUntil = new Date(snoozeUntil).toISOString();
 
           // New properties for create
           const eventColor = this.getNodeParameter('eventColor', i, '') as string;
@@ -541,11 +541,12 @@ export class ReclaimAiTask implements INodeType {
               body.timeChunksRequired = 4;
             }
 
+            // Ensure due and snoozeUntil dates are formatted correctly for 'update' operation
             const due = this.getNodeParameter('due', i, null) as string | null;
-            if (due !== null) body.due = due;
+            if (due !== null) body.due = new Date(due).toISOString();
 
             const snoozeUntil = this.getNodeParameter('snoozeUntil', i, null) as string | null;
-            if (snoozeUntil !== null) body.snoozeUntil = snoozeUntil;
+            if (snoozeUntil !== null) body.snoozeUntil = new Date(snoozeUntil).toISOString();
 
             const eventColor = this.getNodeParameter('eventColor', i, null) as string | null;
             if (eventColor === '') {
