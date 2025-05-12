@@ -1,97 +1,134 @@
 # n8n-nodes-reclaim-ai
 
-Custom n8n nodes to connect and automate [Reclaim.ai](https://reclaim.ai)
+**Developed by [LABISO GmbH](https://www.labiso.de)**
 
-This package provides custom nodes for n8n to interact with the Reclaim.ai API, allowing you to automate task management.
+This repository contains a custom n8n node designed to integrate with [Reclaim.ai](https://reclaim.ai), an intelligent task management and calendar blocking service. Reclaim.ai helps you automatically find the best time for your tasks, habits, and meetings, ensuring your schedule is optimized and productive.
 
-## Features
+This n8n connector allows you to seamlessly automate your Reclaim.ai workflows, bringing the power of intelligent scheduling into your n8n automations.
 
-- Create, read, update, and delete Reclaim.ai tasks
-- Support for all task properties: priority, category, time chunks, etc.
-- Filter tasks by various criteria
+Contributions to this project are welcome! Please feel free to submit pull requests or open issues.
+
+## Features & Capabilities
+
+The Reclaim.ai Task node provides the following operations:
+
+- **Create Task**:
+  - Define new tasks with comprehensive details:
+    - Title (required)
+    - Time Schedule (required, dynamically loaded from your Reclaim.ai account)
+    - Event Category (required: Work, Personal)
+    - Priority (required: P1 - Urgent, P2 - High, P3 - Medium, P4 - Low)
+    - Duration (required, in minutes, e.g., 15, 30, 45)
+    - Minimum Chunk Size (required, in minutes)
+    - Maximum Chunk Size (required, in minutes)
+    - Always Private (required, boolean)
+    - Up Next (On Deck) (required, boolean)
+    - Notes (optional)
+    - Due Date (optional, UTC ISO 8601 format)
+    - Snooze Until (optional, UTC ISO 8601 format)
+    - Event Color (optional, e.g., #FF0000 or "blue")
+- **Get Task**:
+  - Retrieve a specific task by its unique Task ID.
+- **Update Task**:
+  - Modify an existing task using its Task ID. You can update any of the fields available during task creation. At least one field must be provided for an update.
+- **Delete Task**:
+  - Remove a task from Reclaim.ai using its Task ID.
+- **Get All Tasks**:
+  - Fetch a list of all your tasks.
+  - Filter tasks by status (e.g., NEW, SCHEDULED, IN_PROGRESS, COMPLETE, ARCHIVED, CANCELLED).
 
 ## Installation
 
-### Local Installation (Recommended for Development)
+You can install these nodes in your n8n instance in a couple of ways:
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/labiso-gmbh/n8n-nodes-reclaim-ai.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd n8n-nodes-reclaim-ai
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Build the project:
-   ```bash
-   npm run build
-   ```
-5. Start n8n with the custom nodes:
-   ```bash
-   export N8N_CUSTOM_EXTENSIONS=/path/to/n8n-nodes-reclaim-ai/dist
-   n8n start
-   ```
+### Community Nodes (Recommended for most users)
 
-### Using in Production
+Once this package is published to npm, you should be able to install it directly from the n8n UI:
 
-To use these nodes in your production n8n instance:
+1.  Go to **Settings > Community Nodes**.
+2.  Click **Install a community node**.
+3.  Enter `n8n-nodes-reclaim-ai` and click **Install**.
 
-1. Navigate to your n8n installation directory
-2. Install the package:
-   ```bash
-   npm install n8n-nodes-reclaim-ai
-   ```
-3. Set the environment variable:
+### Manual Installation / Development
 
-   ```bash
-   export N8N_CUSTOM_EXTENSIONS=/path/to/node_modules/n8n-nodes-reclaim-ai
-   ```
+1.  Clone this repository:
+    ```bash
+    git clone https://github.com/labiso-gmbh/n8n-nodes-reclaim-ai.git # Or your fork
+    cd n8n-nodes-reclaim-ai
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Build the project:
+    ```bash
+    npm run build
+    ```
+4.  Link the package to your n8n custom extensions directory.
+    If n8n is installed globally:
 
-4. Restart your n8n instance
+    ```bash
+    npm link
+    # In your n8n user folder (e.g., ~/.n8n or the directory where n8n stores its data)
+    mkdir -p custom-nodes
+    cd custom-nodes
+    npm link n8n-nodes-reclaim-ai
+    ```
+
+    Alternatively, set the `N8N_CUSTOM_EXTENSIONS` environment variable to point to the `dist` folder of this project:
+
+    ```bash
+    export N8N_CUSTOM_EXTENSIONS=/path/to/n8n-nodes-reclaim-ai
+    ```
+
+    (Ensure you use the absolute path to the `n8n-nodes-reclaim-ai` directory, not the `dist` folder itself if you are not using `npm link` for the `dist` folder directly).
+
+5.  Restart your n8n instance.
 
 ## Usage
 
-After installation, you'll find the "Reclaim.ai Task" node in the n8n nodes panel. Use it to interact with your Reclaim.ai tasks.
+After successful installation, the "Reclaim.ai Task" node will appear in your n8n nodes panel, typically under the "Action" category.
 
 ### Authentication
 
-1. In n8n, go to Settings > Credentials
-2. Create a new "Reclaim.ai API" credential
-3. Enter your Reclaim.ai API key
+1.  In n8n, navigate to the **Credentials** section.
+2.  Click **Add credential**.
+3.  Search for "Reclaim.ai API" and select it.
+4.  Enter your Reclaim.ai API key. You can usually find or generate this in your Reclaim.ai account settings.
+5.  Save the credential.
 
-### Creating Tasks
+### Configuring the Node
 
-1. Add the "Reclaim.ai Task" node to your workflow
-2. Select the "Create" operation
-3. Configure the required task details:
-   - Title: Name of the task
-   - Time Schedule: Select a time scheme from your Reclaim.ai account
-   - Event Category: Work, Personal, or Both
-   - Priority: Urgent (P1), High (P2), Medium (P3), or Low (P4)
-   - Duration: Time required in minutes (15-minute increments)
-   - Minimum Chunk Size: Minimum number of 15-min chunks for a task session
-   - Maximum Chunk Size: Maximum number of 15-min chunks for a task session
-   - Always Private: Whether the task should be private
-   - Up Next: Whether the task should be marked as "Up Next"
-4. Connect your "Reclaim.ai API" credential
-5. Run the workflow
+1.  Drag the "Reclaim.ai Task" node onto your workflow canvas.
+2.  Select the desired **Operation** (e.g., Create, Get, Update, Delete, Get All).
+3.  Based on the selected operation, fill in the required and optional fields.
+    - For operations requiring a **Task ID** (Get, Update, Delete), ensure you provide a valid ID.
+    - For **Create** and **Update**, carefully configure the task properties.
+    - For **Get All**, you can use the **Status** filter to narrow down results.
+4.  Select your configured "Reclaim.ai API" credential from the **Credential** dropdown.
+5.  Connect the node to your workflow and run it.
 
 ## Development
 
-To modify or extend this package:
+If you wish to contribute or modify this package:
 
-1. Make your changes to the source files
-2. Run `npm run build` to compile
-3. Use `npm run dev` to start n8n with your changes
+1.  Ensure you have Node.js and npm installed.
+2.  Clone the repository and install dependencies as described in the "Manual Installation" section.
+3.  Make your changes to the source files (primarily in the `nodes` and `credentials` directories).
+4.  Rebuild the project after making changes:
+    ```bash
+    npm run build
+    ```
+5.  To continuously build during development:
+    ```bash
+    npm run dev
+    ```
+    This will watch for changes and rebuild automatically. You'll still need to restart n8n or have it configured to pick up changes in your custom nodes directory.
 
 ## Support
 
-If you encounter any issues or have questions, please [create an issue](https://github.com/labiso-gmbh/n8n-nodes-reclaim-ai/issues) on GitHub.
+If you encounter any issues, have questions, or want to suggest improvements, please [create an issue](https://github.com/labiso-gmbh/n8n-nodes-reclaim-ai/issues) on the GitHub repository.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the `LICENSE` file for details.
