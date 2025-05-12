@@ -4767,7 +4767,7 @@ eslint-plugin-local@^1.0.0:
   resolved "https://registry.yarnpkg.com/eslint-plugin-local/-/eslint-plugin-local-1.0.0.tgz#f0c07011c95fec42bfb4d909debb6ea035f3b2a4"
   integrity sha512-bcwcQnKL/Iw5Vi/F2lG1he5oKD2OGjhsLmrcctkWrWq5TujgiaYb0cj3pZgr3XI54inNVnneOFdAx1daLoYLJQ==
 
-eslint-plugin-n8n-nodes-base@^1.24.0:
+eslint-plugin-n8n-nodes-base@^1.16.3:
   version "1.16.3"
   resolved "https://registry.yarnpkg.com/eslint-plugin-n8n-nodes-base/-/eslint-plugin-n8n-nodes-base-1.16.3.tgz#524b12643554764e9ad95944c97232b03c7dbc03"
   integrity sha512-edLX42Vg4B+y0kzkitTVDmHZQrG5/wUZO874N5Z9leBuxt5TG1pqMY4zdr35RlpM4p4REr/T9x+6DpsQSL63WA==
