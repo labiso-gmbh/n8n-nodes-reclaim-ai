@@ -64,7 +64,8 @@
   "remoteEnv": {
     // Tells n8n where to look for custom nodes.
     // Assumes compiled nodes will be in a 'dist' directory at the root of the workspace.
-    "N8N_CUSTOM_EXTENSIONS": "/workspaces/${localWorkspaceFolderBasename}/dist"
+    "N8N_CUSTOM_EXTENSIONS": "/workspaces/${localWorkspaceFolderBasename}/dist",
+    "N8N_LOG_LEVEL": "debug"
     // You might also want to set NODE_ENV if needed, e.g., "NODE_ENV": "development"
   },
   // Lifecycle commands: Commands to run at different stages of the container lifecycle.

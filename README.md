@@ -67,7 +67,16 @@ After installation, you'll find the "Reclaim.ai Task" node in the n8n nodes pane
 
 1. Add the "Reclaim.ai Task" node to your workflow
 2. Select the "Create" operation
-3. Configure the task details (title, priority, etc.)
+3. Configure the required task details:
+   - Title: Name of the task
+   - Time Schedule: Select a time scheme from your Reclaim.ai account
+   - Event Category: Work, Personal, or Both
+   - Priority: Urgent (P1), High (P2), Medium (P3), or Low (P4)
+   - Duration: Time required in minutes (15-minute increments)
+   - Minimum Chunk Size: Minimum number of 15-min chunks for a task session
+   - Maximum Chunk Size: Maximum number of 15-min chunks for a task session
+   - Always Private: Whether the task should be private
+   - Up Next: Whether the task should be marked as "Up Next"
 4. Connect your "Reclaim.ai API" credential
 5. Run the workflow
 

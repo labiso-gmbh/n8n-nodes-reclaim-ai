@@ -82,3 +82,5 @@ test-results/
 # Optional: If you bundle your nodes for distribution
 *.tgz
 *.n8n.zip
+
+reclaim-api.yml

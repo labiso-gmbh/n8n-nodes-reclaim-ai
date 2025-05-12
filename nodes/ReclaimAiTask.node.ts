@@ -8,6 +8,7 @@ import {
   NodeApiError,
   IHttpRequestOptions,
   NodeConnectionType, // Added
+  ILoadOptionsFunctions, // Added
 } from 'n8n-workflow';
 
 export class ReclaimAiTask implements INodeType {
@@ -70,25 +71,26 @@ export class ReclaimAiTask implements INodeType {
           show: { operation: ['create', 'update'] },
         },
         description: 'Title of the task',
-        // 'required' is handled by making it visible for 'create' and checking in execute
+        required: true,
       },
-      {
-        displayName: 'Type',
-        name: 'type',
-        type: 'options',
-        displayOptions: {
-          show: { operation: ['create', 'update'] },
-        },
-        default: 'TASK',
-        options: [
-          // From API Spec
-          { name: 'Task', value: 'TASK' },
-          { name: 'Habit', value: 'HABIT' },
-          { name: 'Buffer', value: 'BUFFER' },
-          { name: 'One-on-One', value: 'ONE_ON_ONE' },
-        ],
-        description: 'Type of the task',
-      },
+      // The 'type' field (TASK, HABIT, etc.) is removed as it's not part of the /api/tasks POST request body schema.
+      // {
+      //   displayName: 'Type',
+      //   name: 'type',
+      //   type: 'options',
+      //   displayOptions: {
+      //     show: { operation: ['create', 'update'] },
+      //   },
+      //   default: 'TASK',
+      //   options: [
+      //     // From API Spec
+      //     { name: 'Task', value: 'TASK' },
+      //     { name: 'Habit', value: 'HABIT' },
+      //     { name: 'Buffer', value: 'BUFFER' },
+      //     { name: 'One-on-One', value: 'ONE_ON_ONE' },
+      //   ],
+      //   description: 'Type of the task',
+      // },
       {
         displayName: 'Notes',
         name: 'notes',
@@ -107,77 +109,45 @@ export class ReclaimAiTask implements INodeType {
         displayOptions: {
           show: { operation: ['create', 'update'] },
         },
-        default: 'MEDIUM',
+        default: 'P2', // User-facing default
         options: [
-          // From API Spec
-          { name: 'Urgent', value: 'URGENT' },
-          { name: 'High', value: 'HIGH' },
-          { name: 'Medium', value: 'MEDIUM' },
-          { name: 'Low', value: 'LOW' },
+          // User-facing values, will be mapped to API values (P1-P4)
+          { name: 'Urgent', value: 'P4' },
+          { name: 'High', value: 'P3' },
+          { name: 'Medium', value: 'P2' },
+          { name: 'Low', value: 'P1' },
         ],
         description: 'Priority of the task',
+        required: true,
       },
       {
-        displayName: 'Category',
-        name: 'category',
+        displayName: 'Time Schedule',
+        name: 'timeSchedule',
+        type: 'options',
+        typeOptions: {
+          loadOptionsMethod: 'getTimeSchedules',
+        },
+        default: '',
+        displayOptions: {
+          show: { operation: ['create'] },
+        },
+        description: 'The schedule associated with the task',
+        required: true,
+      },
+      {
+        displayName: 'Event Category',
+        name: 'eventCategory',
         type: 'options',
         displayOptions: {
           show: { operation: ['create', 'update'] },
         },
-        default: 'WORK', // API default not specified, WORK is common
+        default: 'WORK',
         options: [
-          // From API Spec
           { name: 'Work', value: 'WORK' },
           { name: 'Personal', value: 'PERSONAL' },
-          { name: 'Project', value: 'PROJECT' },
-          { name: 'Meeting', value: 'MEETING' },
-          { name: 'Learning', value: 'LEARNING' },
-          { name: 'Travel', value: 'TRAVEL' },
-          { name: 'Routine', value: 'ROUTINE' },
-          { name: 'Uncategorized', value: 'UNCATEGORIZED' },
         ],
         description: 'Category of the task',
-      },
-      {
-        displayName: 'Status',
-        name: 'status',
-        type: 'options',
-        displayOptions: {
-          show: { operation: ['create', 'update'] },
-        },
-        default: 'NEW', // Common for create
-        options: [
-          // From API Spec
-          { name: 'New', value: 'NEW' },
-          { name: 'Scheduled', value: 'SCHEDULED' },
-          { name: 'In Progress', value: 'IN_PROGRESS' },
-          { name: 'Completed', value: 'COMPLETED' },
-          { name: 'Cancelled', value: 'CANCELLED' },
-          { name: 'Archived', value: 'ARCHIVED' },
-        ],
-        description: 'Status of the task',
-      },
-      {
-        displayName: 'Event Sub Type',
-        name: 'eventSubType',
-        type: 'options',
-        displayOptions: {
-          show: { operation: ['create', 'update'] },
-        },
-        default: 'TASK',
-        options: [
-          // Selected subset from API Spec
-          { name: 'Task', value: 'TASK' },
-          { name: 'Meeting Prep', value: 'MEETING_PREP' },
-          { name: 'Meeting Wrap Up', value: 'MEETING_WRAP_UP' },
-          { name: 'Focus Block', value: 'FOCUS_BLOCK' },
-          { name: 'Project Work', value: 'PROJECT_WORK' },
-          { name: 'Travel Flight', value: 'TRAVEL_FLIGHT' },
-          { name: 'Personal Appointment', value: 'PERSONAL_APPOINTMENT' },
-          { name: 'Personal Exercise', value: 'PERSONAL_EXERCISE' },
-          // Add more as needed from: TRAVEL_HOTEL, TRAVEL_CAR, TRAVEL_TRAIN, TRAVEL_BUS, TRAVEL_BOAT, TRAVEL_OTHER, PERSONAL_ERRAND, PERSONAL_MEAL, PERSONAL_BREAK, PERSONAL_OTHER
-        ],
-        description: 'Event sub type of the task',
+        required: true,
       },
       {
         displayName: 'Due Date',
@@ -200,15 +170,40 @@ export class ReclaimAiTask implements INodeType {
         description: 'Snooze the task until this date (ISO 8601 format)',
       },
       {
-        displayName: 'Time Chunks Required',
-        name: 'timeChunksRequired',
+        displayName: 'Duration (in minutes)',
+        name: 'duration',
         type: 'number',
-        typeOptions: { minValue: 1 },
-        default: 1, // API default is 1
+        typeOptions: { minValue: 15, step: 15 },
+        default: 15, // Default to 15 minutes
         displayOptions: {
           show: { operation: ['create', 'update'] },
         },
-        description: 'Number of 15-minute time chunks required for the task',
+        description: 'Enter the time required in minutes (15-minute increments).',
+        required: true,
+      },
+      {
+        displayName: 'Minimum Chunk Size',
+        name: 'minChunkSize',
+        type: 'number',
+        typeOptions: { minValue: 1 },
+        default: 1, // Default to 1 chunk (15 min)
+        displayOptions: {
+          show: { operation: ['create', 'update'] },
+        },
+        description: 'Minimum number of 15-min chunks for task sessions.',
+        required: true,
+      },
+      {
+        displayName: 'Maximum Chunk Size',
+        name: 'maxChunkSize',
+        type: 'number',
+        typeOptions: { minValue: 1 },
+        default: 6, // Default to 6 chunks (1.5 hours)
+        displayOptions: {
+          show: { operation: ['create', 'update'] },
+        },
+        description: 'Maximum number of 15-min chunks for task sessions.',
+        required: true,
       },
       {
         displayName: 'Always Private',
@@ -219,6 +214,18 @@ export class ReclaimAiTask implements INodeType {
           show: { operation: ['create', 'update'] },
         },
         description: 'Whether the task should always be private',
+        required: true,
+      },
+      {
+        displayName: 'Up Next',
+        name: 'onDeck',
+        type: 'boolean',
+        default: false, // API default
+        displayOptions: {
+          show: { operation: ['create', 'update'] },
+        },
+        description: 'Whether the task should be marked as "Up Next"',
+        required: true,
       },
       {
         displayName: 'Event Color',
@@ -230,20 +237,6 @@ export class ReclaimAiTask implements INodeType {
         },
         placeholder: '#RRGGBB or color name',
         description: 'Color for the event (e.g., #FF0000 or "blue")',
-      },
-      {
-        displayName: 'Scheduling Mode',
-        name: 'schedulingMode',
-        type: 'options',
-        displayOptions: {
-          show: { operation: ['create', 'update'] },
-        },
-        default: 'AUTOMATIC', // API default not specified, AUTOMATIC is common
-        options: [
-          { name: 'Automatic', value: 'AUTOMATIC' },
-          { name: 'Manual', value: 'MANUAL' },
-        ],
-        description: 'Scheduling mode for the task',
       },
 
       // For Get All
@@ -363,6 +356,55 @@ export class ReclaimAiTask implements INodeType {
     ],
   };
 
+  methods = {
+    loadOptions: {
+      async getTimeSchedules(this: ILoadOptionsFunctions) {
+        this.logger.debug('Starting getTimeSchedules method');
+
+        const credentials = await this.getCredentials('reclaimAiApi');
+        this.logger.debug('Retrieved credentials for Reclaim.ai API');
+
+        const apiKey = credentials.apiKey as string;
+        const options: IHttpRequestOptions = {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            Accept: 'application/json',
+          },
+          method: 'GET',
+          url: 'https://api.app.reclaim.ai/api/timeschemes',
+          json: true,
+        };
+
+        this.logger.debug('Prepared API request options', { options });
+
+        try {
+          const responseData = await this.helpers.httpRequest(options);
+          this.logger.debug('Received response from Reclaim.ai API', { responseData });
+
+          if (!Array.isArray(responseData)) {
+            this.logger.error('Unexpected response format', { responseData });
+            throw new NodeApiError(this.getNode(), responseData, {
+              message: 'Unexpected response format when fetching time schedules',
+            });
+          }
+
+          const schedules = responseData.map(
+            (schedule: { id: string; name: string; title: string }) => ({
+              name: schedule.title, // Use the title for the dropdown display
+              value: schedule.id,
+            }),
+          );
+
+          this.logger.debug('Mapped response data to dropdown options', { schedules });
+          return schedules;
+        } catch (error) {
+          this.logger.error('Error occurred while fetching time schedules', { error });
+          throw error;
+        }
+      },
+    },
+  };
+
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
@@ -393,24 +435,46 @@ export class ReclaimAiTask implements INodeType {
             );
           }
           body.title = title;
-          body.type = this.getNodeParameter('type', i, 'TASK') as string;
-          body.notes = this.getNodeParameter('notes', i, '') as string;
-          body.priority = this.getNodeParameter('priority', i, 'MEDIUM') as string;
-          body.category = this.getNodeParameter('category', i, 'WORK') as string;
-          body.status = this.getNodeParameter('status', i, 'NEW') as string;
-          body.eventSubType = this.getNodeParameter('eventSubType', i, 'TASK') as string;
+          const timeSchedule = this.getNodeParameter('timeSchedule', i) as string;
+          if (!timeSchedule) {
+            throw new NodeOperationError(
+              this.getNode(),
+              'Time Schedule is required for create operation.',
+              { itemIndex: i },
+            );
+          }
+          body.timeSchemeId = timeSchedule;
+
+          // Convert minutes to 15-minute chunks for timeChunksRequired
+          const duration = this.getNodeParameter('duration', i, 15) as number;
+          const timeChunks = Math.ceil(duration / 15);
+          body.timeChunksRequired = timeChunks;
+
+          // Required field - alwaysPrivate
+          body.alwaysPrivate = this.getNodeParameter('alwaysPrivate', i, false) as boolean;
+
+          // Required field - onDeck
+          body.onDeck = this.getNodeParameter('onDeck', i, false) as boolean;
+
+          // Required field - priority
+          body.priority = this.getNodeParameter('priority', i, 'P2') as string;
+
+          // Required field - eventCategory
+          body.eventCategory = this.getNodeParameter('eventCategory', i, 'WORK') as string;
+
+          // Required fields - minChunkSize and maxChunkSize
+          body.minChunkSize = this.getNodeParameter('minChunkSize', i, 2) as number;
+          body.maxChunkSize = this.getNodeParameter('maxChunkSize', i, 16) as number;
+
+          // Optional fields
           const due = this.getNodeParameter('due', i) as string;
           if (due) body.due = due;
           const snoozeUntil = this.getNodeParameter('snoozeUntil', i) as string;
           if (snoozeUntil) body.snoozeUntil = snoozeUntil;
-          const timeChunksRequired = this.getNodeParameter('timeChunksRequired', i) as number;
-          if (timeChunksRequired) body.timeChunksRequired = timeChunksRequired;
 
           // New properties for create
-          body.alwaysPrivate = this.getNodeParameter('alwaysPrivate', i, false) as boolean;
           const eventColor = this.getNodeParameter('eventColor', i, '') as string;
           if (eventColor) body.eventColor = eventColor;
-          body.schedulingMode = this.getNodeParameter('schedulingMode', i, 'AUTOMATIC') as string;
         } else if (operation === 'get' || operation === 'update' || operation === 'delete') {
           const taskId = this.getNodeParameter('taskId', i) as string;
           if (!taskId) {
@@ -434,27 +498,44 @@ export class ReclaimAiTask implements INodeType {
           if (operation === 'delete') method = 'DELETE';
           if (operation === 'update') {
             method = 'PATCH';
-            // For update, only include fields that are provided
+            // Always include required fields for update operation
+            body.eventCategory = this.getNodeParameter('eventCategory', i, 'WORK') as string;
+
+            // Required field - priority
+            const priorityFromNodeUpdate = this.getNodeParameter('priority', i, 'MEDIUM') as string;
+            const priorityMapUpdate: { [key: string]: string } = {
+              URGENT: 'P1',
+              HIGH: 'P2',
+              MEDIUM: 'P3',
+              LOW: 'P4',
+            };
+            body.priority = priorityMapUpdate[priorityFromNodeUpdate.toUpperCase()] || 'P3';
+
+            // Required fields - minChunkSize and maxChunkSize
+            body.minChunkSize = this.getNodeParameter('minChunkSize', i, 1) as number;
+            body.maxChunkSize = this.getNodeParameter('maxChunkSize', i, 6) as number;
+
+            // Required field - alwaysPrivate
+            body.alwaysPrivate = this.getNodeParameter('alwaysPrivate', i, false) as boolean;
+
+            // Required field - onDeck
+            body.onDeck = this.getNodeParameter('onDeck', i, false) as boolean;
+
+            // For update, include provided fields
             const title = this.getNodeParameter('title', i, null) as string | null;
             if (title !== null) body.title = title;
-
-            const type = this.getNodeParameter('type', i, null) as string | null;
-            if (type !== null) body.type = type;
 
             const notes = this.getNodeParameter('notes', i, null) as string | null;
             if (notes !== null) body.notes = notes;
 
-            const priority = this.getNodeParameter('priority', i, null) as string | null;
-            if (priority !== null) body.priority = priority;
-
-            const category = this.getNodeParameter('category', i, null) as string | null;
-            if (category !== null) body.category = category;
-
-            const status = this.getNodeParameter('status', i, null) as string | null;
-            if (status !== null) body.status = status;
-
-            const eventSubType = this.getNodeParameter('eventSubType', i, null) as string | null;
-            if (eventSubType !== null) body.eventSubType = eventSubType;
+            // Convert minutes to timeChunksRequired
+            const duration = this.getNodeParameter('duration', i, null) as number | null;
+            if (duration !== null) {
+              body.timeChunksRequired = Math.ceil(duration / 15);
+            } else {
+              // Default to 4 chunks (1 hour) if not provided
+              body.timeChunksRequired = 4;
+            }
 
             const due = this.getNodeParameter('due', i, null) as string | null;
             if (due !== null) body.due = due;
@@ -462,22 +543,12 @@ export class ReclaimAiTask implements INodeType {
             const snoozeUntil = this.getNodeParameter('snoozeUntil', i, null) as string | null;
             if (snoozeUntil !== null) body.snoozeUntil = snoozeUntil;
 
-            const timeChunksRequired = this.getNodeParameter('timeChunksRequired', i, null) as
-              | number
-              | null;
-            if (timeChunksRequired !== null) body.timeChunksRequired = timeChunksRequired;
-
-            // New properties for update
-            const alwaysPrivate = this.getNodeParameter('alwaysPrivate', i, null) as boolean | null;
-            if (alwaysPrivate !== null) body.alwaysPrivate = alwaysPrivate;
-
             const eventColor = this.getNodeParameter('eventColor', i, null) as string | null;
-            if (eventColor !== null) body.eventColor = eventColor; // Allow empty string to clear
-
-            const schedulingMode = this.getNodeParameter('schedulingMode', i, null) as
-              | string
-              | null;
-            if (schedulingMode !== null) body.schedulingMode = schedulingMode;
+            if (eventColor === '') {
+              body.eventColor = null;
+            } else if (eventColor !== null) {
+              body.eventColor = eventColor;
+            }
 
             if (Object.keys(body).length === 0) {
               throw new NodeOperationError(
@@ -544,6 +615,10 @@ export class ReclaimAiTask implements INodeType {
           json: true,
         };
 
+        this.logger.debug(
+          `Reclaim.ai API Request Options for operation '${operation}': ${JSON.stringify(options, null, 2)}`,
+        );
+
         if (method === 'POST' || method === 'PATCH') {
           options.body = body;
         }
@@ -551,10 +626,16 @@ export class ReclaimAiTask implements INodeType {
           options.qs = qs;
         }
 
+        this.logger.debug('Request body:', { body });
+        this.logger.debug('Request query string:', { qs });
+
         const responseData = await this.helpers.httpRequest(options);
+
+        this.logger.debug('Response data:', { responseData });
+
         const taskIdForLog =
           operation === 'delete' || operation === 'update' || operation === 'get'
-            ? (this.getNodeParameter('taskId', i, '') as string)
+            ? (this.getNodeParameter('taskId', i) as string)
             : '';
 
         if (operation === 'delete') {
