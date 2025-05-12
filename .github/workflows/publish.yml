@@ -30,7 +30,7 @@ jobs:
         run: |
           yarn version --patch --message "Bump version to %s"
           yarn run build
-          yarn publish
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
