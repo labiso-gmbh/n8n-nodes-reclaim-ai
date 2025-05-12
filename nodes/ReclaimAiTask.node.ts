@@ -182,27 +182,27 @@ export class ReclaimAiTask implements INodeType {
         required: true,
       },
       {
-        displayName: 'Minimum Chunk Size',
+        displayName: 'Minimum Chunk Size (in minutes)',
         name: 'minChunkSize',
         type: 'number',
-        typeOptions: { minValue: 1 },
-        default: 1, // Default to 1 chunk (15 min)
+        typeOptions: { minValue: 15, step: 15 },
+        default: 15, // Default to 15 minutes
         displayOptions: {
           show: { operation: ['create', 'update'] },
         },
-        description: 'Minimum number of 15-min chunks for task sessions.',
+        description: 'Minimum duration of task sessions in minutes (15-minute increments).',
         required: true,
       },
       {
-        displayName: 'Maximum Chunk Size',
+        displayName: 'Maximum Chunk Size (in minutes)',
         name: 'maxChunkSize',
         type: 'number',
-        typeOptions: { minValue: 1 },
-        default: 6, // Default to 6 chunks (1.5 hours)
+        typeOptions: { minValue: 15, step: 15 },
+        default: 90, // Default to 90 minutes
         displayOptions: {
           show: { operation: ['create', 'update'] },
         },
-        description: 'Maximum number of 15-min chunks for task sessions.',
+        description: 'Maximum duration of task sessions in minutes (15-minute increments).',
         required: true,
       },
       {
@@ -463,8 +463,11 @@ export class ReclaimAiTask implements INodeType {
           body.eventCategory = this.getNodeParameter('eventCategory', i, 'WORK') as string;
 
           // Required fields - minChunkSize and maxChunkSize
-          body.minChunkSize = this.getNodeParameter('minChunkSize', i, 2) as number;
-          body.maxChunkSize = this.getNodeParameter('maxChunkSize', i, 16) as number;
+          // Convert minutes to 15-minute chunks for minChunkSize and maxChunkSize
+          const minChunkSizeMinutes = this.getNodeParameter('minChunkSize', i, 15) as number;
+          const maxChunkSizeMinutes = this.getNodeParameter('maxChunkSize', i, 90) as number;
+          body.minChunkSize = Math.ceil(minChunkSizeMinutes / 15);
+          body.maxChunkSize = Math.ceil(maxChunkSizeMinutes / 15);
 
           // Optional fields
           const due = this.getNodeParameter('due', i) as string;
