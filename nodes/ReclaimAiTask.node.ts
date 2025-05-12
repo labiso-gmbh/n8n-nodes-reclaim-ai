@@ -310,26 +310,6 @@ export class ReclaimAiTask implements INodeType {
         description: 'Filter tasks created/scheduled on or before this date (ISO 8601)',
       },
       {
-        displayName: 'Include Source Details',
-        name: 'includeSourceDetails',
-        type: 'boolean',
-        default: false, // API default
-        displayOptions: {
-          show: { operation: ['getAll', 'get'] },
-        },
-        description: 'Include source details in the response',
-      },
-      {
-        displayName: 'Include Instances',
-        name: 'includeInstances',
-        type: 'boolean',
-        default: true, // API default
-        displayOptions: {
-          show: { operation: ['getAll', 'get'] },
-        },
-        description: 'Include task instances in the response',
-      },
-      {
         displayName: 'Additional Filters (JSON)',
         name: 'filters',
         type: 'json',
@@ -502,13 +482,6 @@ export class ReclaimAiTask implements INodeType {
           endpoint = `${baseUrl}/${taskId}`;
           if (operation === 'get') {
             method = 'GET';
-            // Add query params for 'get' operation based on node properties
-            qs.includeSourceDetails = this.getNodeParameter(
-              'includeSourceDetails',
-              i,
-              false,
-            ) as boolean;
-            qs.includeInstances = this.getNodeParameter('includeInstances', i, true) as boolean;
           }
           if (operation === 'delete') method = 'DELETE';
           if (operation === 'update') {
@@ -612,13 +585,6 @@ export class ReclaimAiTask implements INodeType {
               this.logger.warn(`Invalid filterEnd date: ${filterEnd}`);
             }
           }
-
-          qs.includeSourceDetails = this.getNodeParameter(
-            'includeSourceDetails',
-            i,
-            false,
-          ) as boolean;
-          qs.includeInstances = this.getNodeParameter('includeInstances', i, true) as boolean;
 
           const filtersJson = this.getNodeParameter('filters', i, '{}') as string;
           try {
