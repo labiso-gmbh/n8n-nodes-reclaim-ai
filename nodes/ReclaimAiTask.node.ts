@@ -465,16 +465,20 @@ export class ReclaimAiTask implements INodeType {
           if (due && due !== '') {
             const dueDate = new Date(due);
             if (isNaN(dueDate.getTime())) {
-              throw new NodeOperationError(this.getNode(), 'Invalid due date format', { itemIndex: i });
+              throw new NodeOperationError(this.getNode(), 'Invalid due date format', {
+                itemIndex: i,
+              });
             }
             body.due = dueDate.toISOString();
           }
-          
+
           const snoozeUntil = this.getNodeParameter('snoozeUntil', i) as string;
           if (snoozeUntil && snoozeUntil !== '') {
             const snoozeDate = new Date(snoozeUntil);
             if (isNaN(snoozeDate.getTime())) {
-              throw new NodeOperationError(this.getNode(), 'Invalid snooze until date format', { itemIndex: i });
+              throw new NodeOperationError(this.getNode(), 'Invalid snooze until date format', {
+                itemIndex: i,
+              });
             }
             body.snoozeUntil = snoozeDate.toISOString();
           }
@@ -542,7 +546,9 @@ export class ReclaimAiTask implements INodeType {
             if (due !== null && due !== '') {
               const dueDate = new Date(due);
               if (isNaN(dueDate.getTime())) {
-                throw new NodeOperationError(this.getNode(), 'Invalid due date format', { itemIndex: i });
+                throw new NodeOperationError(this.getNode(), 'Invalid due date format', {
+                  itemIndex: i,
+                });
               }
               body.due = dueDate.toISOString();
             }
@@ -551,7 +557,9 @@ export class ReclaimAiTask implements INodeType {
             if (snoozeUntil !== null && snoozeUntil !== '') {
               const snoozeDate = new Date(snoozeUntil);
               if (isNaN(snoozeDate.getTime())) {
-                throw new NodeOperationError(this.getNode(), 'Invalid snooze until date format', { itemIndex: i });
+                throw new NodeOperationError(this.getNode(), 'Invalid snooze until date format', {
+                  itemIndex: i,
+                });
               }
               body.snoozeUntil = snoozeDate.toISOString();
             }
