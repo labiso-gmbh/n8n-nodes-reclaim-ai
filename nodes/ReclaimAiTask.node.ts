@@ -68,10 +68,20 @@ export class ReclaimAiTask implements INodeType {
         type: 'string',
         default: '',
         displayOptions: {
-          show: { operation: ['create', 'update'] },
+          show: { operation: ['create'] },
         },
         description: 'Title of the task',
         required: true,
+      },
+      {
+        displayName: 'Title (Optional)',
+        name: 'title',
+        type: 'string',
+        default: '',
+        displayOptions: {
+          show: { operation: ['update'] },
+        },
+        description: 'Title of the task (only if updating)',
       },
       {
         displayName: 'Notes',
@@ -120,7 +130,7 @@ export class ReclaimAiTask implements INodeType {
         name: 'eventCategory',
         type: 'options',
         displayOptions: {
-          show: { operation: ['create', 'update'] },
+          show: { operation: ['create'] },
         },
         default: 'WORK',
         options: [
@@ -486,39 +496,35 @@ export class ReclaimAiTask implements INodeType {
           if (operation === 'delete') method = 'DELETE';
           if (operation === 'update') {
             method = 'PATCH';
+
             // Always include required fields for update operation
-            body.eventCategory = this.getNodeParameter('eventCategory', i, 'WORK') as string;
+            const eventCategory = this.getNodeParameter('eventCategory', i, null) as string | null;
+            if (eventCategory !== null) body.eventCategory = eventCategory;
 
-            // Required field - priority
-            body.priority = this.getNodeParameter('priority', i, 'P3') as string;
+            const priority = this.getNodeParameter('priority', i, null) as string | null;
+            if (priority !== null) body.priority = priority;
 
-            // Required fields - minChunkSize and maxChunkSize
-            body.minChunkSize = this.getNodeParameter('minChunkSize', i, 1) as number;
-            body.maxChunkSize = this.getNodeParameter('maxChunkSize', i, 6) as number;
+            const minChunkSize = this.getNodeParameter('minChunkSize', i, null) as number | null;
+            if (minChunkSize !== null) body.minChunkSize = Math.ceil(minChunkSize / 15);
 
-            // Required field - alwaysPrivate
-            body.alwaysPrivate = this.getNodeParameter('alwaysPrivate', i, false) as boolean;
+            const maxChunkSize = this.getNodeParameter('maxChunkSize', i, null) as number | null;
+            if (maxChunkSize !== null) body.maxChunkSize = Math.ceil(maxChunkSize / 15);
 
-            // Required field - onDeck
-            body.onDeck = this.getNodeParameter('onDeck', i, false) as boolean;
+            const alwaysPrivate = this.getNodeParameter('alwaysPrivate', i, null) as boolean | null;
+            if (alwaysPrivate !== null) body.alwaysPrivate = alwaysPrivate;
 
-            // For update, include provided fields
+            const onDeck = this.getNodeParameter('onDeck', i, null) as boolean | null;
+            if (onDeck !== null) body.onDeck = onDeck;
+
             const title = this.getNodeParameter('title', i, null) as string | null;
             if (title !== null) body.title = title;
 
             const notes = this.getNodeParameter('notes', i, null) as string | null;
             if (notes !== null) body.notes = notes;
 
-            // Convert minutes to timeChunksRequired
             const duration = this.getNodeParameter('duration', i, null) as number | null;
-            if (duration !== null) {
-              body.timeChunksRequired = Math.ceil(duration / 15);
-            } else {
-              // Default to 4 chunks (1 hour) if not provided
-              body.timeChunksRequired = 4;
-            }
+            if (duration !== null) body.timeChunksRequired = Math.ceil(duration / 15);
 
-            // Ensure due and snoozeUntil dates are formatted correctly for 'update' operation
             const due = this.getNodeParameter('due', i, null) as string | null;
             if (due !== null) body.due = new Date(due).toISOString();
 
@@ -526,11 +532,7 @@ export class ReclaimAiTask implements INodeType {
             if (snoozeUntil !== null) body.snoozeUntil = new Date(snoozeUntil).toISOString();
 
             const eventColor = this.getNodeParameter('eventColor', i, null) as string | null;
-            if (eventColor === '') {
-              body.eventColor = null;
-            } else if (eventColor !== null) {
-              body.eventColor = eventColor;
-            }
+            if (eventColor !== null) body.eventColor = eventColor;
 
             if (Object.keys(body).length === 0) {
               throw new NodeOperationError(
