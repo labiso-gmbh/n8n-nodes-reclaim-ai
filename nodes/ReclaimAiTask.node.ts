@@ -462,13 +462,26 @@ export class ReclaimAiTask implements INodeType {
 
           // Optional fields
           const due = this.getNodeParameter('due', i) as string;
-          if (due) body.due = new Date(due).toISOString();
+          if (due && due !== '') {
+            const dueDate = new Date(due);
+            if (isNaN(dueDate.getTime())) {
+              throw new NodeOperationError(this.getNode(), 'Invalid due date format', { itemIndex: i });
+            }
+            body.due = dueDate.toISOString();
+          }
+          
           const snoozeUntil = this.getNodeParameter('snoozeUntil', i) as string;
-          if (snoozeUntil) body.snoozeUntil = new Date(snoozeUntil).toISOString();
+          if (snoozeUntil && snoozeUntil !== '') {
+            const snoozeDate = new Date(snoozeUntil);
+            if (isNaN(snoozeDate.getTime())) {
+              throw new NodeOperationError(this.getNode(), 'Invalid snooze until date format', { itemIndex: i });
+            }
+            body.snoozeUntil = snoozeDate.toISOString();
+          }
 
           // New properties for create
           const eventColor = this.getNodeParameter('eventColor', i, '') as string;
-          if (eventColor) body.eventColor = eventColor;
+          if (eventColor && eventColor !== '') body.eventColor = eventColor;
 
           // Optional fields
           const notes = this.getNodeParameter('notes', i, '') as string;
@@ -526,13 +539,25 @@ export class ReclaimAiTask implements INodeType {
             if (duration !== null) body.timeChunksRequired = Math.ceil(duration / 15);
 
             const due = this.getNodeParameter('due', i, null) as string | null;
-            if (due !== null) body.due = new Date(due).toISOString();
+            if (due !== null && due !== '') {
+              const dueDate = new Date(due);
+              if (isNaN(dueDate.getTime())) {
+                throw new NodeOperationError(this.getNode(), 'Invalid due date format', { itemIndex: i });
+              }
+              body.due = dueDate.toISOString();
+            }
 
             const snoozeUntil = this.getNodeParameter('snoozeUntil', i, null) as string | null;
-            if (snoozeUntil !== null) body.snoozeUntil = new Date(snoozeUntil).toISOString();
+            if (snoozeUntil !== null && snoozeUntil !== '') {
+              const snoozeDate = new Date(snoozeUntil);
+              if (isNaN(snoozeDate.getTime())) {
+                throw new NodeOperationError(this.getNode(), 'Invalid snooze until date format', { itemIndex: i });
+              }
+              body.snoozeUntil = snoozeDate.toISOString();
+            }
 
             const eventColor = this.getNodeParameter('eventColor', i, null) as string | null;
-            if (eventColor !== null) body.eventColor = eventColor;
+            if (eventColor !== null && eventColor !== '') body.eventColor = eventColor;
 
             if (Object.keys(body).length === 0) {
               throw new NodeOperationError(
@@ -555,10 +580,30 @@ export class ReclaimAiTask implements INodeType {
           if (filterType) qs.type = filterType;
 
           const filterStart = this.getNodeParameter('filterStart', i, '') as string;
-          if (filterStart) qs.start = filterStart;
+          if (filterStart && filterStart !== '') {
+            try {
+              const startDate = new Date(filterStart);
+              if (!isNaN(startDate.getTime())) {
+                qs.start = startDate.toISOString();
+              }
+            } catch (e) {
+              // Skip invalid date without throwing error for filter parameters
+              this.logger.warn(`Invalid filterStart date: ${filterStart}`);
+            }
+          }
 
           const filterEnd = this.getNodeParameter('filterEnd', i, '') as string;
-          if (filterEnd) qs.end = filterEnd;
+          if (filterEnd && filterEnd !== '') {
+            try {
+              const endDate = new Date(filterEnd);
+              if (!isNaN(endDate.getTime())) {
+                qs.end = endDate.toISOString();
+              }
+            } catch (e) {
+              // Skip invalid date without throwing error for filter parameters
+              this.logger.warn(`Invalid filterEnd date: ${filterEnd}`);
+            }
+          }
 
           qs.includeSourceDetails = this.getNodeParameter(
             'includeSourceDetails',
