@@ -36,6 +36,8 @@ The Reclaim.ai Task node provides the following operations:
 - **Get All Tasks**:
   - Fetch a list of all your tasks.
   - Filter tasks by status (e.g., NEW, SCHEDULED, IN_PROGRESS, COMPLETE, ARCHIVED, CANCELLED).
+- **Mark Task as**:
+  - Mark a specific task as "Done" or "To Do" using its Task ID.
 
 ## Installation
 
@@ -102,9 +104,10 @@ After successful installation, the "Reclaim.ai Task" node will appear in your n8
 1.  Drag the "Reclaim.ai Task" node onto your workflow canvas.
 2.  Select the desired **Operation** (e.g., Create, Get, Update, Delete, Get All).
 3.  Based on the selected operation, fill in the required and optional fields.
-    - For operations requiring a **Task ID** (Get, Update, Delete), ensure you provide a valid ID.
+    - For operations requiring a **Task ID** (Get, Update, Delete, Mark Task as), ensure you provide a valid ID.
     - For **Create** and **Update**, carefully configure the task properties.
     - For **Get All**, you can use the **Status** filter to narrow down results.
+    - For **Mark Task as**, select whether to mark the task as "Done" or "To Do".
 4.  Select your configured "Reclaim.ai API" credential from the **Credential** dropdown.
 5.  Connect the node to your workflow and run it.
 

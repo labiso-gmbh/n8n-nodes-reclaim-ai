@@ -43,22 +43,40 @@ export class ReclaimAiTask implements INodeType {
           { name: 'Get', value: 'get' },
           { name: 'Get All', value: 'getAll' },
           { name: 'Update', value: 'update' },
+          { name: 'Mark Task as', value: 'markTaskAs' },
         ],
         default: 'create',
       },
 
-      // Task ID: For Get, Update, Delete
+      // Task ID: For Get, Update, Delete, Mark Task as
       {
         displayName: 'Task ID',
         name: 'taskId',
         type: 'string', // API expects int64, but string input is fine for N8N
         default: '',
         displayOptions: {
-          show: { operation: ['get', 'update', 'delete'] },
+          show: { operation: ['get', 'update', 'delete', 'markTaskAs'] },
         },
         placeholder: 'Enter Task ID',
         description: 'The ID of the task',
         required: true, // Task ID is essential for these operations
+      },
+
+      // Fields for "Mark Task as" operation
+      {
+        displayName: 'Mark as',
+        name: 'markAsAction',
+        type: 'options',
+        displayOptions: {
+          show: { operation: ['markTaskAs'] },
+        },
+        default: 'done',
+        options: [
+          { name: 'Done', value: 'done' },
+          { name: 'To Do', value: 'todo' },
+        ],
+        description: 'Mark the task as Done or To Do',
+        required: true,
       },
 
       // Fields for Create & Update
@@ -311,15 +329,16 @@ export class ReclaimAiTask implements INodeType {
         const operation = this.getNodeParameter('operation', i) as string;
         const credentials = await this.getCredentials('reclaimAiApi');
         const apiKey = credentials.apiKey as string;
-        const baseUrl = 'https://api.app.reclaim.ai/api/tasks';
+        const baseUrl = 'https://api.app.reclaim.ai/api'; // Adjusted baseUrl for new operations
 
-        let endpoint = baseUrl;
+        let endpoint = ''; // Initialize endpoint
         let method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET';
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const body: { [key: string]: any } = {};
 
         if (operation === 'create') {
           method = 'POST';
+          endpoint = `${baseUrl}/tasks`;
           const title = this.getNodeParameter('title', i) as string;
           if (!title) {
             throw new NodeOperationError(
@@ -402,7 +421,7 @@ export class ReclaimAiTask implements INodeType {
               { itemIndex: i },
             );
           }
-          endpoint = `${baseUrl}/${taskId}`;
+          endpoint = `${baseUrl}/tasks/${taskId}`;
           if (operation === 'get') {
             method = 'GET';
           }
@@ -482,7 +501,35 @@ export class ReclaimAiTask implements INodeType {
 
           const queryString = queryParams.toString();
           if (queryString) {
-            endpoint = `${baseUrl}?${queryString}`;
+            endpoint = `${baseUrl}/tasks?${queryString}`;
+          }
+        } else if (operation === 'markTaskAs') {
+          method = 'POST';
+          const taskId = this.getNodeParameter('taskId', i) as string;
+          if (!taskId) {
+            throw new NodeOperationError(
+              this.getNode(),
+              'Task ID is required for Mark Task as operation.',
+              {
+                itemIndex: i,
+              },
+            );
+          }
+          const markAsAction = this.getNodeParameter('markAsAction', i) as string;
+          if (!markAsAction) {
+            throw new NodeOperationError(this.getNode(), 'Mark as action is required.', {
+              itemIndex: i,
+            });
+          }
+
+          if (markAsAction === 'done') {
+            endpoint = `${baseUrl}/planner/done/task/${taskId}`;
+          } else if (markAsAction === 'todo') {
+            endpoint = `${baseUrl}/planner/unarchive/task/${taskId}`;
+          } else {
+            throw new NodeOperationError(this.getNode(), `Invalid markAsAction: ${markAsAction}`, {
+              itemIndex: i,
+            });
           }
         }
 
@@ -514,7 +561,10 @@ export class ReclaimAiTask implements INodeType {
         this.logger.debug('Response data:', { responseData });
 
         const taskIdForLog =
-          operation === 'delete' || operation === 'update' || operation === 'get'
+          operation === 'delete' ||
+          operation === 'update' ||
+          operation === 'get' ||
+          operation === 'markTaskAs' // Added markTaskAs
             ? (this.getNodeParameter('taskId', i) as string)
             : '';
 
@@ -551,6 +601,44 @@ export class ReclaimAiTask implements INodeType {
               )}`,
             );
             returnData.push({ json: responseData, pairedItem: { item: i } }); // Push as is
+          }
+        } else if (operation === 'markTaskAs') {
+          // For markTaskAs, Reclaim API might return 200 OK with a simple success message or 204 No Content
+          if (
+            responseData === '' ||
+            responseData === undefined ||
+            (typeof responseData === 'object' &&
+              responseData !== null &&
+              Object.keys(responseData).length === 0)
+          ) {
+            // Handle 204 No Content or empty object as success
+            returnData.push({
+              json: {
+                success: true,
+                id: taskIdForLog,
+                action: this.getNodeParameter('markAsAction', i),
+              },
+              pairedItem: { item: i },
+            });
+          } else if (
+            typeof responseData === 'object' &&
+            responseData !== null &&
+            (responseData as any).success === true
+          ) {
+            // Handle explicit success response
+            returnData.push({ json: responseData, pairedItem: { item: i } });
+          } else if (typeof responseData === 'object' && responseData !== null) {
+            // Handle other object responses, potentially indicating success or details
+            returnData.push({ json: responseData, pairedItem: { item: i } });
+          } else {
+            // Fallback for unexpected responses
+            this.logger.warn(
+              `Unexpected response for ${this.getNodeParameter('markAsAction', i)} task ${taskIdForLog}: ${JSON.stringify(responseData)}`,
+            );
+            returnData.push({
+              json: { success: false, id: taskIdForLog, response: responseData },
+              pairedItem: { item: i },
+            });
           }
         } else {
           // For create, get, update (when update returns a body)

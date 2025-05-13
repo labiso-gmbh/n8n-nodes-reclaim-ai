@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-reclaim-ai",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "n8n custom nodes for Reclaim.ai",
   "main": "dist/index.js",
   "scripts": {
@@ -19,7 +19,10 @@
       "dist/nodes/ReclaimAiTask.node.js"
     ]
   },
-  "repository": "https://github.com/labiso-gmbh/n8n-nodes-reclaim-ai.git",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/labiso-gmbh/n8n-nodes-reclaim-ai.git"
+  },
   "author": "Laurence Lars Labusch <lala@labiso.de>",
   "license": "MIT",
   "dependencies": {
