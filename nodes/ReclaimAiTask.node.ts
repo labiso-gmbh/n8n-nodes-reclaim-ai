@@ -44,18 +44,19 @@ export class ReclaimAiTask implements INodeType {
           { name: 'Get All', value: 'getAll' },
           { name: 'Update', value: 'update' },
           { name: 'Mark Task as', value: 'markTaskAs' },
+          { name: 'Start/Stop Task', value: 'startStopTask' },
         ],
         default: 'create',
       },
 
-      // Task ID: For Get, Update, Delete, Mark Task as
+      // Task ID: For Get, Update, Delete, Mark Task as, Start/Stop Task
       {
         displayName: 'Task ID',
         name: 'taskId',
         type: 'string', // API expects int64, but string input is fine for N8N
         default: '',
         displayOptions: {
-          show: { operation: ['get', 'update', 'delete', 'markTaskAs'] },
+          show: { operation: ['get', 'update', 'delete', 'markTaskAs', 'startStopTask'] }, // Added startStopTask
         },
         placeholder: 'Enter Task ID',
         description: 'The ID of the task',
@@ -76,6 +77,23 @@ export class ReclaimAiTask implements INodeType {
           { name: 'To Do', value: 'todo' },
         ],
         description: 'Mark the task as Done or To Do',
+        required: true,
+      },
+
+      // Fields for "Start/Stop Task" operation
+      {
+        displayName: 'Action',
+        name: 'startStopAction',
+        type: 'options',
+        displayOptions: {
+          show: { operation: ['startStopTask'] },
+        },
+        default: 'start',
+        options: [
+          { name: 'Start', value: 'start' },
+          { name: 'Stop', value: 'stop' },
+        ],
+        description: 'Choose to Start or Stop the task',
         required: true,
       },
 
@@ -531,6 +549,38 @@ export class ReclaimAiTask implements INodeType {
               itemIndex: i,
             });
           }
+        } else if (operation === 'startStopTask') {
+          method = 'POST';
+          const taskId = this.getNodeParameter('taskId', i) as string;
+          if (!taskId) {
+            throw new NodeOperationError(
+              this.getNode(),
+              'Task ID is required for Start/Stop Task operation.',
+              {
+                itemIndex: i,
+              },
+            );
+          }
+          const startStopAction = this.getNodeParameter('startStopAction', i) as string;
+          if (!startStopAction) {
+            throw new NodeOperationError(this.getNode(), 'Start/Stop action is required.', {
+              itemIndex: i,
+            });
+          }
+
+          if (startStopAction === 'start') {
+            endpoint = `${baseUrl}/planner/start/task/${taskId}`;
+          } else if (startStopAction === 'stop') {
+            endpoint = `${baseUrl}/planner/stop/task/${taskId}`;
+          } else {
+            throw new NodeOperationError(
+              this.getNode(),
+              `Invalid startStopAction: ${startStopAction}`,
+              {
+                itemIndex: i,
+              },
+            );
+          }
         }
 
         const options: IHttpRequestOptions = {
@@ -564,7 +614,8 @@ export class ReclaimAiTask implements INodeType {
           operation === 'delete' ||
           operation === 'update' ||
           operation === 'get' ||
-          operation === 'markTaskAs' // Added markTaskAs
+          operation === 'markTaskAs' || // Added markTaskAs
+          operation === 'startStopTask' // Added startStopTask
             ? (this.getNodeParameter('taskId', i) as string)
             : '';
 
@@ -634,6 +685,44 @@ export class ReclaimAiTask implements INodeType {
             // Fallback for unexpected responses
             this.logger.warn(
               `Unexpected response for ${this.getNodeParameter('markAsAction', i)} task ${taskIdForLog}: ${JSON.stringify(responseData)}`,
+            );
+            returnData.push({
+              json: { success: false, id: taskIdForLog, response: responseData },
+              pairedItem: { item: i },
+            });
+          }
+        } else if (operation === 'startStopTask') {
+          // For startStopTask, Reclaim API might return 200 OK with a simple success message or 204 No Content
+          if (
+            responseData === '' ||
+            responseData === undefined ||
+            (typeof responseData === 'object' &&
+              responseData !== null &&
+              Object.keys(responseData).length === 0)
+          ) {
+            // Handle 204 No Content or empty object as success
+            returnData.push({
+              json: {
+                success: true,
+                id: taskIdForLog,
+                action: this.getNodeParameter('startStopAction', i),
+              },
+              pairedItem: { item: i },
+            });
+          } else if (
+            typeof responseData === 'object' &&
+            responseData !== null &&
+            (responseData as any).success === true
+          ) {
+            // Handle explicit success response
+            returnData.push({ json: responseData, pairedItem: { item: i } });
+          } else if (typeof responseData === 'object' && responseData !== null) {
+            // Handle other object responses, potentially indicating success or details
+            returnData.push({ json: responseData, pairedItem: { item: i } });
+          } else {
+            // Fallback for unexpected responses
+            this.logger.warn(
+              `Unexpected response for ${this.getNodeParameter('startStopAction', i)} task ${taskIdForLog}: ${JSON.stringify(responseData)}`,
             );
             returnData.push({
               json: { success: false, id: taskIdForLog, response: responseData },

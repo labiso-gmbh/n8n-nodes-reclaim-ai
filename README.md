@@ -38,6 +38,8 @@ The Reclaim.ai Task node provides the following operations:
   - Filter tasks by status (e.g., NEW, SCHEDULED, IN_PROGRESS, COMPLETE, ARCHIVED, CANCELLED).
 - **Mark Task as**:
   - Mark a specific task as "Done" or "To Do" using its Task ID.
+- **Start/Stop Task**:
+  - Start or stop a specific task using its Task ID.
 
 ## Installation
 
@@ -108,6 +110,7 @@ After successful installation, the "Reclaim.ai Task" node will appear in your n8
     - For **Create** and **Update**, carefully configure the task properties.
     - For **Get All**, you can use the **Status** filter to narrow down results.
     - For **Mark Task as**, select whether to mark the task as "Done" or "To Do".
+    - For **Start/Stop Task**, select whether to "Start" or "Stop" the task.
 4.  Select your configured "Reclaim.ai API" credential from the **Credential** dropdown.
 5.  Connect the node to your workflow and run it.
 
